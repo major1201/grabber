@@ -1,19 +1,20 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"fmt"
-	"os"
-	"errors"
 	"github.com/major1201/goutils"
+	"os"
 )
 
+// GrabberFlags defines the command line flags
 type GrabberFlags struct {
-	help bool
+	help    bool
 	version bool
-	urls arrFlag
-	dest string
-	yes bool
+	urls    arrFlag
+	dest    string
+	yes     bool
 }
 
 type arrFlag []string

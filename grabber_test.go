@@ -1,8 +1,8 @@
-package grabber
+package main
 
 import (
-	"testing"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func TestResolveAddr(t *testing.T) {
@@ -14,7 +14,7 @@ func TestResolveAddr(t *testing.T) {
 		"http://www.example.com/img_10.jpg",
 		"http://www.example.com/img_11.jpg",
 		"http://www.example.com/img_12.jpg",
-		}, ResolveAddr("http://www.example.com/img_[8:12].jpg"))
+	}, ResolveAddr("http://www.example.com/img_[8:12].jpg"))
 	ta.Equal([]string{
 		"http://www.example.com/img_08.jpg",
 		"http://www.example.com/img_09.jpg",
