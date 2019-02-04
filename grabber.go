@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 var logger = logging.New("SYS")
@@ -20,10 +21,12 @@ const ProjectName = "grabber"
 // Version means main project version
 const Version = "0.1.1"
 
+var wg = sync.WaitGroup{}
+
 func confirmation(urls []string) {
-	if !gf.yes {
+	if !gf.Yes {
 		for _, url := range urls {
-			fmt.Println(url, "==>", filepath.Join(gf.dest, filepath.Base(url)))
+			fmt.Println(url, "==>", filepath.Join(gf.Dest, filepath.Base(url)))
 		}
 		fmt.Println("-----------------------")
 		reader := bufio.NewReader(os.Stdin)
@@ -45,26 +48,28 @@ func confirmation(urls []string) {
 	}
 }
 
-func download(urls []string) {
-	chs := make([]chan int, len(urls))
-	for i, url := range urls {
-		addr := url
-		chs[i] = make(chan int)
-		go func(ch chan int) {
-			defer func() {
-				fmt.Println(addr, " ==> ok")
-				ch <- 1
-			}()
-			e := goutils.Download(addr, filepath.Join(gf.dest, filepath.Base(addr)))
-			if e != nil {
-				logger.Error(e)
-			}
-		}(chs[i])
-	}
-
-	for _, ch := range chs {
+func downloadOne(ch chan int, url string) {
+	defer func() {
+		fmt.Println(url, " ==> ok")
 		<-ch
+		wg.Done()
+	}()
+
+	ch <- 0
+
+	e := goutils.Download(url, filepath.Join(gf.Dest, filepath.Base(url)))
+	if e != nil {
+		logger.Error(e)
 	}
+}
+
+func download(urls []string) {
+	ch := make(chan int, gf.Concurrent)
+	for _, url := range urls {
+		wg.Add(1)
+		go downloadOne(ch, url)
+	}
+	wg.Wait()
 }
 
 // ResolveAddr parses a string to multiple url strings
@@ -117,7 +122,7 @@ func main() {
 	parseFlags()
 
 	var urls []string
-	for _, url := range gf.urls {
+	for _, url := range gf.Urls {
 		urlClips := ResolveAddr(url)
 		urls = append(urls, urlClips...)
 	}
