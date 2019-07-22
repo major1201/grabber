@@ -10,11 +10,12 @@ import (
 
 // GrabberFlags defines the command line flags
 type GrabberFlags struct {
-	help    bool
-	version bool
-	urls    arrFlag
-	dest    string
-	yes     bool
+	Help       bool
+	Version    bool
+	Urls       arrFlag
+	Dest       string
+	Yes        bool
+	Concurrent int
 }
 
 type arrFlag []string
@@ -31,20 +32,21 @@ func (v *arrFlag) Set(s string) error {
 var gf = &GrabberFlags{}
 
 func parseFlags() {
-	flag.BoolVar(&gf.help, "help", false, "print command usage")
-	flag.BoolVar(&gf.version, "version", false, "print version")
-	flag.Var(&gf.urls, "url", "urls to download")
-	flag.BoolVar(&gf.yes, "y", false, "ignore confirmation")
+	flag.BoolVar(&gf.Help, "help", false, "print command usage")
+	flag.BoolVar(&gf.Version, "version", false, "print version")
+	flag.Var(&gf.Urls, "url", "urls to download")
+	flag.BoolVar(&gf.Yes, "y", false, "ignore confirmation")
+	flag.IntVar(&gf.Concurrent, "j", 5, "Run n jobs in parallel, default 5")
 	pwd, _ := os.Getwd()
-	flag.StringVar(&gf.dest, "dest", pwd, "specify the download directory, default: current working directory")
+	flag.StringVar(&gf.Dest, "dest", pwd, "specify the download directory, default: current working directory")
 	flag.Parse()
 
-	if gf.help == true || len(os.Args) == 1 {
+	if gf.Help == true || len(os.Args) == 1 {
 		fmt.Println("grabber - a simple concurrent download tool written in go (https://github.com/major1201/grabber)")
 		flag.Usage()
 		os.Exit(0)
 	}
-	if gf.version == true {
+	if gf.Version == true {
 		fmt.Println(ProjectName, "-", Version)
 		os.Exit(0)
 	}
@@ -57,14 +59,14 @@ func parseFlags() {
 }
 
 func checkFlags() error {
-	if len(gf.urls) == 0 {
+	if len(gf.Urls) == 0 {
 		return errors.New("at lease one url should be specified")
 	}
-	if len(gf.dest) == 0 {
+	if len(gf.Dest) == 0 {
 		return errors.New("please specify the download directory")
 	}
-	if !goutils.IsDir(gf.dest) {
-		return errors.New(gf.dest + "is not a directory")
+	if !goutils.IsDir(gf.Dest) {
+		return errors.New(gf.Dest + "is not a directory")
 	}
 	return nil
 }
